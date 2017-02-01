@@ -9,8 +9,8 @@
 function generation_increase ($matrix) // generacio leptetes
 {
 	$matrix_next = $matrix;
-	foreach ($matrix as $cord_x => $matrix_row) {
-		foreach ($matrix_row as $cord_y => $matrix_block)
+	foreach ($matrix as $cord_y => $matrix_row) {
+		foreach ($matrix_row as $cord_x => $matrix_block)
 		{
 			$nb_num = block_get_neighbour_count($matrix,$cord_x,$cord_y);
 			if ($matrix_block == false) // halott a jelenlegi blokk
@@ -18,6 +18,10 @@ function generation_increase ($matrix) // generacio leptetes
 				if ($nb_num == 3) // 3 szomszed -> ujjaeled a halott blokk
 				{
 					$new_val = true;
+				}
+				else
+				{
+					$new_val = false;
 				}
 			}
 			else // elo a jelenlegi blokk
@@ -31,7 +35,7 @@ function generation_increase ($matrix) // generacio leptetes
 					$new_val = true;
 				}
 			}
-			$matrix_next[$cord_x][$cord_y] = $new_val;
+			$matrix_next[$cord_y][$cord_x] = $new_val;
 		}
 	}
 	return $matrix_next;
@@ -44,16 +48,19 @@ function block_get_neighbour_count ($matrix, $m_x, $m_y) // a szomszedok szamat 
 	{
 		for ($y=$m_y-1;$y<($m_y+2);$y++)
 		{
-			if ($matrix[$x][$y] == true)
+			if ($matrix[$y][$x] == true)
 			{
-				$neighbour_living++;
+				if (!(($y==$m_y) && ($x==$m_x)))
+				{
+					$neighbour_living++;
+				}
 			}
 		}
 	}
 	return $neighbour_living;
 }
 
-function load_lif($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file betoltese a meghatarozott meretu matrixra
+function load_lif ($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file betoltese a meghatarozott meretu matrixra
 {
 	$matrix = array();
 	$cord_x_start = $cord_x = intval($matrix_size_x / 2);
@@ -74,7 +81,6 @@ function load_lif($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file 
 		$sordat = explode(' ',$sor);
 		if ($sordat[0] == '#P') // uj pozicio
 		{
-			echo 'poz';
 			$cord_x = $cord_x_start + intval($sordat[1]);
 			$cord_y = $cord_y_start + intval($sordat[2]);
 		}
@@ -85,7 +91,8 @@ function load_lif($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file 
 			{
 				if (substr($sordat[0],$p,1) == '*')
 				{
-					$matrix[$cord_x + $p][$cord_y] = true;
+					$matrix[$cord_y][$cord_x + $p] = true;
+					//echo ($cord_x+$p).','.($cord_y).'<br>';
 				}
 			}
 			$cord_y++;
@@ -96,6 +103,59 @@ function load_lif($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file 
 	return $matrix;
 }
 
-/*$arr = load_lif('bi-gun.lif',50,50);
-print_r($arr);*/
+function matrix_to_array ($matrix) // egydimenzios arrayba toltom az adatokat
+{
+	$matrix_array = array();
+	foreach ($matrix as $cord_y => $matrix_row)
+	{
+		foreach ($matrix_row as $cord_x => $matrix_block)
+		{
+			if ($matrix_block)
+			{
+				$matrix_array[] = $cord_x;
+				$matrix_array[] = $cord_y;
+			}
+		}
+	}
+	return $matrix_array;
+}
+
+
+// programtorzs
+
+if ($_GET['reset']=='1') // ujrainditas
+{
+	unlink('gol.json');
+}
+
+if (file_exists('gol.json')) // ha van folyamatban levo allapot
+{
+	$matrix = json_decode(file_get_contents('gol.json'));
+}
+else
+{
+	if ($_GET['lif_url']!='')
+	{
+		$matrix = load_lif($_GET['lif_url'], 50, 50);
+	}
+	else
+	{
+		$matrix = load_lif('http://radicaleye.com/lifepage/patterns/acorn.lif', 50, 50);
+		//$matrix = load_lif('test.lif',50,50);
+	}
+}
+
+$matrix = generation_increase($matrix); // kovetkezo fazis
+$array_to_draw = matrix_to_array($matrix);
+
+// html valtozok feltoltese majd kiirasa a kirajzolando tommel
+$tpl = file_get_contents('gol.html');
+$tpl = str_replace('{{ draw_array }}',implode(',',$array_to_draw),$tpl);
+$tpl = str_replace('{{ lif_url }}',$_GET['lif_url'],$tpl);
+echo $tpl;
+
+file_put_contents('gol.json',json_encode($matrix)); // allapot tarolasa JSON-be
+
+// programtorzs vege
+
 ?>

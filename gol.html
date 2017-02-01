@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game of Life</title>
+    <meta http-equiv="refresh" content="0;URL=gol.php?lif_url={{ lif_url }}" />
+</head>
+
+<body>
+<canvas id="gol_canvas" width="400" height="400" style="border:1px solid #d3d3d3;"></canvas>
+
+<script>
+    var c = document.getElementById("gol_canvas");
+    var ctx = c.getContext("2d");
+    var draw_array = [{{ draw_array }}];
+    for (i=0;i < draw_array.length;i=i+2)
+    {
+        ctx.fillRect(draw_array[i]*8, draw_array[i+1]*8, 8, 8);
+    }
+</script>
+
+<p>
+<a href="gol.php?reset=1">reset</a>
+</p>
+</body>
+</html>
