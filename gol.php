@@ -53,5 +53,49 @@ function block_get_neighbour_count ($matrix, $m_x, $m_y) // a szomszedok szamat 
 	return $neighbour_living;
 }
 
+function load_lif($life_file_path, $matrix_size_x, $matrix_size_y) // .lif file betoltese a meghatarozott meretu matrixra
+{
+	$matrix = array();
+	$cord_x_start = $cord_x = intval($matrix_size_x / 2);
+	$cord_y_start = $cord_y = intval($matrix_size_y / 2);
 
+	for ($x=0;$x<$matrix_size_x;$x++)
+	{
+		for ($y=0;$y<$matrix_size_y;$y++)
+		{
+			$matrix[$x][$y] = false;
+		}
+
+	}
+
+	$fp = @fopen($life_file_path,'r');
+	while ($sor = @fgets($fp))
+	{
+		$sordat = explode(' ',$sor);
+		if ($sordat[0] == '#P') // uj pozicio
+		{
+			echo 'poz';
+			$cord_x = $cord_x_start + intval($sordat[1]);
+			$cord_y = $cord_y_start + intval($sordat[2]);
+		}
+		elseif ((substr($sordat[0],0,1)=='.') || (substr($sordat[0],0,1)=='*')) // pont berakasa
+		{
+			$p_len = strlen($sordat[0]);
+			for ($p=0;$p<$p_len;$p++)
+			{
+				if (substr($sordat[0],$p,1) == '*')
+				{
+					$matrix[$cord_x + $p][$cord_y] = true;
+				}
+			}
+			$cord_y++;
+		}
+	}
+	@fclose($fp);
+
+	return $matrix;
+}
+
+/*$arr = load_lif('bi-gun.lif',50,50);
+print_r($arr);*/
 ?>
